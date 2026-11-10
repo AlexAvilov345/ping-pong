@@ -44,6 +44,9 @@ def receive():
 font_win = font.Font(None, 72)
 font_main = font.Font(None, 36)
 
+font_score = font.Font(None, 56)
+font_small = font.Font(None, 20)
+
 #---Анімація м'яча---
 ball_trail = []
 
@@ -51,11 +54,16 @@ ball_trail = []
 # --- ЗОБРАЖЕННЯ ----
 
 # --- ЗВУКИ ---
+wall_sound = mixer.Sound("C:\\Users\\User\\OneDrive\\Documents\\GitHub\\ping-pong\\Sounds\\musicholder-hitting-stalactites-with-axe-212652.mp3")
+platform_sound = mixer.Sound("C:\\Users\\User\\OneDrive\\Documents\\GitHub\\ping-pong\\Sounds\\dragon-studio-tennis-ball-hit-386155.mp3")
 
 # --- ГРА ---
 game_over = False
 winner = None
 you_winner = None
+
+paddle_efect = 0 
+
 my_id, game_state, buffer, client = connect_to_server()
 Thread(target=receive, daemon=True).start()
 while True:
@@ -98,12 +106,27 @@ while True:
     if game_state:
         ball_x = game_state['ball']['x']
         ball_y = game_state['ball']['y']
+        if game_state["sound_event"] == "platform_hit": #!!!!!
+            paddle_efect = 10 #!!!!!!!
+        
         ball_trail.append((ball_x, ball_y))
         if len(ball_trail) > 15:
             ball_trail.pop(0)
 
         
         screen.blit(background_image, (0, 0))
+        if paddle_efect > 0:
+            paddle_efect_0 = (112,30,240)
+            paddle_efect_1 = (20,30,200)
+            paddle_efect -= 1
+        else:
+            paddle_efect_0 = (0, 255, 0)
+            paddle_efect_1 = (255, 0, 255)
+
+        draw.rect(screen, paddle_efect_0, (20, game_state['paddles']['0'], 20, 100))
+        draw.rect(screen, paddle_efect_1, (WIDTH - 40, game_state['paddles']['1'], 20, 100))
+
+
         for y in range(0, HEIGHT, 30):
             draw.rect(screen, (255, 255, 255), (WIDTH // 2 - 2, y, 4, 15))
         draw.rect(screen, (0, 255, 0), (20, game_state['paddles']['0'], 20, 100))
@@ -117,16 +140,18 @@ while True:
                     screen.blit(trail_surface, (pos[0] - 15, pos[1] - 15)) 
 
 
-        score_text = font_main.render(f"{game_state['scores'][0]} : {game_state['scores'][1]}", True, (255, 255, 255))
-        screen.blit(score_text, (WIDTH // 2 -25, 20))
+        score_text = font_score.render(f"{game_state['scores'][0]} : {game_state['scores'][1]}", True, (255, 255, 255))
+
+        score_rect = score_text.get_rect(center=(WIDTH // 2,35))
+        screen.blit(score_text, score_rect)
 
         if game_state['sound_event']:
             if game_state['sound_event'] == 'wall_hit':
                 # звук відбиття м'ячика від стін
-                pass
+                wall_sound.play()
             if game_state['sound_event'] == 'platform_hit':
                 # звук відбиття м'ячика від платформи
-                pass
+                platform_sound.play()
 
     else:
         wating_text = font_main.render(f"Очікування гравців...", True, (255, 255, 255))
