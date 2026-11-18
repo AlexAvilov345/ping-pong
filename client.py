@@ -61,6 +61,7 @@ platform_sound = mixer.Sound("C:\\Users\\User\\OneDrive\\Documents\\GitHub\\ping
 game_over = False
 winner = None
 you_winner = None
+restart_sent = False
 
 paddle_efect = 0 
 
@@ -70,8 +71,19 @@ while True:
     for e in event.get():
         if e.type == QUIT:
             exit()
+        if e.type == KEYDOWN:
+            if e.key == K_k:
+                if ("winner" in game_state 
+                    and game_state["winner"] is not None
+                    and not restart_sent):
+                    client.send(b"RESTSRT")
+                    restart_sent = True 
+
 
     if "countdown" in game_state and game_state["countdown"] > 0:
+        your_winner = None
+        ball_trail.clear()
+
         screen.fill((0, 0, 0))
         countdown_text = font.Font(None, 72).render(str(game_state["countdown"]), True, (255, 255, 255))
         screen.blit(countdown_text, (WIDTH // 2 - 20, HEIGHT // 2 - 30))
@@ -99,6 +111,23 @@ while True:
         text = font_win.render('К - рестарт', True, (255, 215, 0))
         text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 120))
         screen.blit(text, text_rect)
+
+        if not restart_sent:
+            text = font_win.render("K - рестарт", True, (255,215,0))
+        else:
+            request = game_state.get("restart_requests", 0)
+            if request < 2:
+                message = "Очікуємо другого гравця..."
+            else:
+                message = "Пояинаємо нову гру!!!"
+            text = font_main.render(message,True, (255,255,255))
+            ready_text = font_small.render(f"Готові гравці: {request} / 2",
+                                           True,
+                                           (255,0,0))
+            ready_rect = ready_text.get_rect(center = (WIDTH // 2,
+                                                       HEIGHT // 2 + 200))
+            screen.blit(ready_text, ready_rect)
+        
 
         display.update()
         continue  # Блокує гру після перемоги
